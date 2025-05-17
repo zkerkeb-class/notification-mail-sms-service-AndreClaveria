@@ -41,17 +41,10 @@ const config = {
       url: process.env.DATABASE_SERVICE_URL || "http://localhost:3001"
     }
   },
-  notifications: {
-    discord: {
-      webhook: process.env.DISCORD_INFO_WEBHOOK || ""
-    },
-    monitoring: {
-      intervalMinutes: parseInt(
-        process.env.MONITORING_INTERVAL_MINUTES || "5",
-        10
-      ),
-      enabled: process.env.ENABLE_MONITORING === "true"
-    }
+
+  discord: {
+    webhook: process.env.DISCORD_INFO_WEBHOOK || "",
+    service_name: process.env.SERVICE_NAME
   }
 };
 

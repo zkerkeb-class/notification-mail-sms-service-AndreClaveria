@@ -58,30 +58,6 @@ class NotificationController {
       });
     }
   }
-
-  async healthCheck(req: Request, res: Response): Promise<Response> {
-    try {
-      const smtpStatus = await emailService.verifyConnection();
-
-      return res.status(200).json({
-        success: true,
-        message: "Service de notification opérationnel",
-        details: {
-          smtp: smtpStatus ? "Connecté" : "Problème de connexion"
-        }
-      });
-    } catch (error) {
-      logger.error(
-        `Erreur lors de la vérification de l'état du service:`,
-        error
-      );
-      return res.status(500).json({
-        success: false,
-        message: "Erreur interne du serveur",
-        error: error
-      });
-    }
-  }
 }
 
 export default new NotificationController();

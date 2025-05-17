@@ -1,5 +1,5 @@
 // src/app.ts
-import express, { Application } from "express";
+import express, { Application, Request, Response } from "express";
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -20,13 +20,16 @@ app.use(morgan("dev")); // Logs HTTP
 // Routes
 app.use("/api", route);
 setupSwagger(app);
-// Route racine
-app.get("/", (req, res) => {
-  res.json({
-    name: "mail-notification-service",
-    status: "running",
-    environment: config.server.env
-  });
+
+app.get("/health", async (req: Request, res: Response) => {
+  // Endpoint de health check simplifié - sera surveillé par le service de notification
+  const status = {
+    status: "UP",
+    timestamp: new Date().toISOString(),
+    service: config.discord.service_name
+  };
+
+  res.status(200).json(status);
 });
 
 // Gestion des routes non trouvées
