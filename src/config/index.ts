@@ -27,6 +27,9 @@ const config = {
       }
     }
   },
+  database: {
+    mongoUri: process.env.MONGO_URI || ""
+  },
   logging: {
     level: process.env.LOG_LEVEL || "info"
   },

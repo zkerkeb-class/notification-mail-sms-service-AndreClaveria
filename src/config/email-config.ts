@@ -21,7 +21,7 @@ const defaultMailOptions = {
   }
 };
 
-// Interface pour les options d'email (compatible avec nodemailer)
+// Interface étendue pour supporter les headers personnalisés
 interface MailOptions {
   from?: {
     name: string;
@@ -31,32 +31,27 @@ interface MailOptions {
   subject: string;
   html?: string;
   text?: string;
+  replyTo?: string;
+  headers?: Record<string, string>; // Ajout pour le tracking
 }
 
-// Type de retour pour notre fonction sendMail
 interface SendMailResponse {
   messageId: string;
   response: string;
 }
 
-// Pour maintenir la compatibilité avec votre code actuel
 const transporter = {
-  // Cette fonction simule l'interface de nodemailer
   sendMail: async (mailOptions: MailOptions): Promise<SendMailResponse> => {
     try {
-      // Créer un nouvel objet conforme à l'API Brevo
       const sendSmtpEmail: any = {};
 
-      // Définir l'expéditeur dans le format attendu par Brevo
+      // Expéditeur
       sendSmtpEmail.sender = {
-        name: mailOptions.from?.name || "CRM AndreClaveria",
-        email: mailOptions.from?.address || "notifications@andreclaveria.fr"
+        name: mailOptions.from?.name || defaultMailOptions.sender.name,
+        email: mailOptions.from?.address || defaultMailOptions.sender.email
       };
 
-      // Assurez-vous que email est bien défini dans la propriété sender
-      console.log("Sender email:", sendSmtpEmail.sender.email);
-
-      // Définir les destinataires
+      // Destinataires
       sendSmtpEmail.to = Array.isArray(mailOptions.to)
         ? mailOptions.to.map((email) => ({ email }))
         : [{ email: mailOptions.to }];
@@ -65,16 +60,30 @@ const transporter = {
       sendSmtpEmail.htmlContent = mailOptions.html || "";
       sendSmtpEmail.textContent = mailOptions.text || "";
 
-      // Afficher l'objet complet pour débogage
+      // ReplyTo
+      if (mailOptions.replyTo) {
+        sendSmtpEmail.replyTo = {
+          email: mailOptions.replyTo,
+          name: mailOptions.from?.name || defaultMailOptions.sender.name
+        };
+      }
+
+      // Headers personnalisés pour le tracking (IMPORTANT pour les réponses)
+      if (mailOptions.headers) {
+        sendSmtpEmail.headers = mailOptions.headers;
+      }
+
       console.log(
         "Email configuration:",
         JSON.stringify({
           sender: sendSmtpEmail.sender,
-          subject: sendSmtpEmail.subject
+          subject: sendSmtpEmail.subject,
+          headers: sendSmtpEmail.headers
         })
       );
 
       const data = await apiInstance.sendTransacEmail(sendSmtpEmail);
+
       return {
         messageId: (data as any).messageId || "message-id-not-available",
         response: "Email sent successfully"
@@ -84,10 +93,9 @@ const transporter = {
       throw error;
     }
   },
-  // Pour maintenir la compatibilité avec la méthode verify()
+
   verify: async (): Promise<boolean> => {
     try {
-      // Vérifier si l'API key est valide en récupérant les infos du compte
       const accountApi = new Brevo.AccountApi();
       accountApi.setApiKey(
         Brevo.AccountApiApiKeys.apiKey,
@@ -101,4 +109,23 @@ const transporter = {
   }
 };
 
-export { transporter, defaultMailOptions };
+// Nouvelle fonction pour les webhooks Brevo
+export const setupBrevoWebhooks = async () => {
+  try {
+    const webhooksApi = new Brevo.WebhooksApi();
+    webhooksApi.setApiKey(
+      Brevo.WebhooksApiApiKeys.apiKey,
+      config.email.brevo.apiKey
+    );
+
+    // Tu peux utiliser cette fonction pour configurer les webhooks programmatiquement
+    // Ou le faire manuellement dans le dashboard Brevo
+    console.log("Webhooks API ready for configuration");
+    return webhooksApi;
+  } catch (error) {
+    console.error("Error setting up webhooks:", error);
+    throw error;
+  }
+};
+
+export { transporter, defaultMailOptions, apiInstance };

@@ -58,6 +58,22 @@ class NotificationController {
       });
     }
   }
+  async sendEmailToClient(req: Request, res: Response): Promise<Response> {
+    try {
+      const {email, confirmationToken} = req.body
+      return res.status(200).json({
+        success: false,
+        message: "Email envoyé"
+      })
+    } catch (error) {
+      return res.status(500).json({
+        success: false,
+        message: "Erreur interne du serveur",
+        error: error instanceof Error ? error.message : String(error)
+
+      })
+    }
+  }
 }
 
 export default new NotificationController();

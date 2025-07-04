@@ -2,6 +2,11 @@ import app from "./app";
 import config from "./config";
 import { logger } from "./utils/logger";
 import { transporter } from "./config/email-config";
+import connectDB from "./config/db.config";
+
+const PORT = config.server.port;
+
+connectDB();
 
 const startServer = async () => {
   try {
@@ -11,7 +16,7 @@ const startServer = async () => {
 
     // Démarrer le serveur
     // Dans votre fonction de démarrage du serveur
-    app.listen(config.server.port, () => {
+    app.listen(PORT, () => {
       logger.info(
         `Service de notification démarré sur le port ${config.server.port} en mode ${config.server.env}`
       );
@@ -21,7 +26,7 @@ const startServer = async () => {
     logger.warn("Le serveur démarre sans connexion SMTP valide");
 
     // Démarrer le serveur malgré l'erreur SMTP
-    app.listen(config.server.port, () => {
+    app.listen(PORT, () => {
       logger.info(
         `Service de notification démarré sur le port ${config.server.port} en mode ${config.server.env}`
       );
