@@ -1,0 +1,207 @@
+openapi: 3.0.0
+info:
+  title: CRM AndreClaveria Notification Service API
+  version: 1.0.0
+  description: Documentation de l'API du microservice de Notification pour le CRM AndreClaveria
+  contact:
+    name: Support
+    email: support@andreclaveria.fr
+
+servers:
+  - url: http://localhost:3003
+    description: Serveur de développement
+  - url: https://api.andreclaveria.fr/notification
+    description: Serveur de production
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    ConfirmationEmailInput:
+      type: object
+      required:
+        - email
+        - confirmationToken
+      properties:
+        email:
+          type: string
+          format: email
+          description: Email de l'utilisateur
+        confirmationToken:
+          type: string
+          description: Token de confirmation de l'email
+      example:
+        email: user@example.com
+        confirmationToken: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+
+    MonitoringToggleInput:
+      type: object
+      required:
+        - action
+      properties:
+        action:
+          type: string
+          enum: [start, stop]
+          description: Action à effectuer (démarrer ou arrêter la surveillance)
+        intervalMinutes:
+          type: integer
+          description: Intervalle de vérification en minutes (uniquement pour l'action 'start')
+      example:
+        action: "start"
+        intervalMinutes: 5
+
+    ServiceStatus:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Nom du service
+        url:
+          type: string
+          description: URL du service
+        status:
+          type: string
+          enum: [UP, DOWN, UNKNOWN]
+          description: Statut du service
+        responseTime:
+          type: number
+          description: Temps de réponse en ms
+        lastChecked:
+          type: string
+          format: date-time
+          description: Date et heure de la dernière vérification
+      example:
+        name: "auth-service"
+        url: "http://localhost:3000/health"
+        status: "UP"
+        responseTime: 56
+        lastChecked: "2025-05-07T12:34:56.789Z"
+
+    AllServicesStatus:
+      type: object
+      properties:
+        services:
+          type: array
+          items:
+            $ref: "#/components/schemas/ServiceStatus"
+        timestamp:
+          type: string
+          format: date-time
+          description: Date et heure de la vérification
+      example:
+        services:
+          - name: "auth-service"
+            url: "http://localhost:3000/health"
+            status: "UP"
+            responseTime: 56
+            lastChecked: "2025-05-07T12:34:56.789Z"
+          - name: "bdd-service"
+            url: "http://localhost:3002/health"
+            status: "UP"
+            responseTime: 89
+            lastChecked: "2025-05-07T12:34:56.789Z"
+        timestamp: "2025-05-07T12:34:56.789Z"
+
+    NotificationServiceHealth:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Indique si la requête a réussi
+        message:
+          type: string
+          description: Message de statut
+        details:
+          type: object
+          properties:
+            smtp:
+              type: string
+              description: Statut de la connexion SMTP
+            monitoring:
+              type: string
+              description: Statut de la surveillance
+            version:
+              type: string
+              description: Version du service
+            environment:
+              type: string
+              description: Environnement d'exécution
+      example:
+        success: true
+        message: "Service de notification opérationnel"
+        details:
+          smtp: "Connecté"
+          monitoring: "Actif"
+          version: "1.0.0"
+          environment: "development"
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          description: Indique si la requête a réussi
+        message:
+          type: string
+          description: Message de succès
+      example:
+        success: true
+        message: "Opération réussie"
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          default: false
+          description: Indique que la requête a échoué
+        message:
+          type: string
+          description: Message d'erreur
+        error:
+          type: string
+          description: Détails sur l'erreur (optionnel)
+      example:
+        success: false
+        message: "Erreur lors de l'opération"
+
+paths:
+
+
+  #
+  # Routes de notification
+  #
+  /api/notification/send-confirmation:
+    post:
+      summary: Envoyer un email de confirmation
+      tags:
+        - Notification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConfirmationEmailInput"
+      responses:
+        "200":
+          description: Email envoyé avec succès
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+        "400":
+          description: Données d'entrée invalides
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "500":
+          description: Erreur serveur
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
